@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+db.sqlite3  # Ignore if using SQLite
+.env  # Ignore environment variables
