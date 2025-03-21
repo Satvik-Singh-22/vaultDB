@@ -18,7 +18,7 @@ CREATE TABLE Employee (
     BranchID INT REFERENCES Branch(BranchID), 
     Role VARCHAR(50), 
     Username VARCHAR(50) UNIQUE NOT NULL,
-    Password VARCHAR(256) NOT NULL
+    Password VARCHAR(25) NOT NULL
 );
 
 ---------------------------------------------------------------

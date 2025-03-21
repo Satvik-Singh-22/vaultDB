@@ -85,13 +85,13 @@ INSERT INTO Customer VALUES (70, 'Eric Wolf', '7058 Ashley Centers, Collinschest
 
 
 -- Insert Account Types
-INSERT INTO AccountType (TypeID, TypeName, InterestRate) VALUES
+INSERT INTO AccountType VALUES
 (1, 'Savings', 3.5),
 (2, 'Current', 0.0),
 (3, 'Fixed Deposit', 6.0);
 
 -- Insert Loan Types
-INSERT INTO LoanType (Code, Name, InterestRate) VALUES
+INSERT INTO LoanType VALUES
 (1, 'Home Loan', 7.5),
 (2, 'Car Loan', 8.0),
 (3, 'Personal Loan', 10.5),
@@ -182,17 +182,17 @@ INSERT INTO Account VALUES (80, 2, 61631.72, 37, 6);
 
 
 -- Insert in Employee table
-INSERT INTO Employee VALUES (1, 'Employee_1', 3, 'Loan Officer', 'emp1', '20cf0efd47');
+INSERT INTO Employee VALUES (1, 'Employee_1', 3, 'Manager', 'emp1', '20cf0efd47');
 INSERT INTO Employee VALUES (2, 'Employee_2', 4, 'Support Staff', 'emp2', '86d1806648');
 INSERT INTO Employee VALUES (3, 'Employee_3', 5, 'Manager', 'emp3', '69b0b47eb0');
-INSERT INTO Employee VALUES (4, 'Employee_4', 2, 'Support Staff', 'emp4', 'e88ec8ff0c');
+INSERT INTO Employee VALUES (4, 'Employee_4', 2, 'Manager', 'emp4', 'e88ec8ff0c');
 INSERT INTO Employee VALUES (5, 'Employee_5', 4, 'Loan Officer', 'emp5', '7fedc470b1');
-INSERT INTO Employee VALUES (6, 'Employee_6', 4, 'Loan Officer', 'emp6', '5bbb735e36');
+INSERT INTO Employee VALUES (6, 'Employee_6', 4, 'Manager', 'emp6', '5bbb735e36');
 INSERT INTO Employee VALUES (7, 'Employee_7', 4, 'Loan Officer', 'emp7', '1e7b7df1a6');
 INSERT INTO Employee VALUES (8, 'Employee_8', 1, 'Loan Officer', 'emp8', '431c5610d1');
 INSERT INTO Employee VALUES (9, 'Employee_9', 1, 'Teller', 'emp9', '7067e9bc10');
 INSERT INTO Employee VALUES (10, 'Employee_10', 6, 'Manager', 'emp10', '39e3294966');
-INSERT INTO Employee VALUES (11, 'Employee_11', 5, 'Manager', 'emp11', 'd75480464e');
+INSERT INTO Employee VALUES (11, 'Employee_11', 5, 'Support Staff', 'emp11', 'd75480464e');
 INSERT INTO Employee VALUES (12, 'Employee_12', 3, 'Support Staff', 'emp12', '99c653cb32');
 INSERT INTO Employee VALUES (13, 'Employee_13', 3, 'Support Staff', 'emp13', '3735821c23');
 INSERT INTO Employee VALUES (14, 'Employee_14', 1, 'Manager', 'emp14', 'abdc928a64');
@@ -337,9 +337,9 @@ INSERT INTO Repayment VALUES (86, 40, 40, '2023-06-04', 729.41, 'Overdue', '2025
 INSERT INTO BankManager (ManagerID, BranchID) 
 SELECT EmployeeID, 1 FROM Employee WHERE Username = 'emp14';
 INSERT INTO BankManager (ManagerID, BranchID) 
-SELECT EmployeeID, 2 FROM Employee WHERE Username = 'emp3';
+SELECT EmployeeID, 2 FROM Employee WHERE Username = 'emp4';
 INSERT INTO BankManager (ManagerID, BranchID) 
-SELECT EmployeeID, 3 FROM Employee WHERE Username = 'emp3';
+SELECT EmployeeID, 3 FROM Employee WHERE Username = 'emp1';
 INSERT INTO BankManager (ManagerID, BranchID) 
 SELECT EmployeeID, 4 FROM Employee WHERE Username = 'emp3';
 INSERT INTO BankManager (ManagerID, BranchID) 
