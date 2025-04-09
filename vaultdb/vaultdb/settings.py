@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'rest_framework',
     'django.contrib.staticfiles',
     'bank',
 ]
@@ -56,7 +57,7 @@ ROOT_URLCONF = 'vaultdb.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / "vaultdb/bank/templates"],
+        'DIRS': [BASE_DIR / "frontend/templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -67,6 +68,12 @@ TEMPLATES = [
             ],
         },
     },
+]
+
+import os
+
+TEMPLATES[0]['DIRS'] = [
+    os.path.join(BASE_DIR, 'frontend', 'templates')
 ]
 
 WSGI_APPLICATION = 'vaultdb.wsgi.application'
@@ -123,7 +130,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [
-    BASE_DIR / "vaultdb/bank/static"
+    os.path.join(BASE_DIR, 'frontend', 'static')
 ]
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field

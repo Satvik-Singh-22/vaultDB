@@ -1,14 +1,55 @@
 from django.shortcuts import render
+from rest_framework import viewsets
+from .models import *
+from .serializers import *
 
+class BranchViewSet(viewsets.ModelViewSet):
+    queryset= Branch.objects.all()
+    serializer_class= BranchSerializer
 
-def home(request):
-    return render(request, 'bank/home.html')
+class EmployeeViewSet(viewsets.ModelViewSet):
+    queryset= Employee.objects.all()
+    serializer_class= EmployeeSerializer
 
-def login_view(request):
-    return render(request, 'bank/login.html')
+class BranchManagerViewSet(viewsets.ModelViewSet):
+    queryset= BranchManager.objects.all()
+    serializer_class= BranchManagerSerializer
 
-def dashboard(request):
-    return render(request, 'bank/dashboard.html')
+class CustomerViewSet(viewsets.ModelViewSet):
+    queryset= Customer.objects.all()
+    serializer_class= CustomerSerializer
 
-def apply_loan(request):
-    return render(request, 'bank/loan_application.html')
+class AccountTypeViewSet(viewsets.ModelViewSet):
+    queryset= AccountType.objects.all()
+    serializer_class= AccountTypeSerializer
+
+class AccountViewSet(viewsets.ModelViewSet):
+    queryset= Account.objects.all()
+    serializer_class= AccountSerializer
+
+class LoanViewSet(viewsets.ModelViewSet):
+    queryset= Loan.objects.all()
+    serializer_class= LoanSerializer
+
+class LoanTypeViewSet(viewsets.ModelViewSet):
+    queryset= LoanType.objects.all()
+    serializer_class= LoanTypeSerializer
+
+class RepaymentViewSet(viewsets.ModelViewSet):
+    queryset= Repayment.objects.all()
+    serializer_class= RepaymentSerializer
+
+class CardViewSet(viewsets.ModelViewSet):
+    queryset= Card.objects.all()
+    serializer_class= CardSerializer
+
+class CustomerSupportViewSet(viewsets.ModelViewSet):
+    queryset= CustomerSupport.objects.all()
+    serializer_class= LoanSerializer
+    
+class BankTransactionViewSet(viewsets.ModelViewSet):
+    queryset= BankTransaction.objects.all()
+    serializer_class= BankTransactionSerializer
+    
+def frontend(request):
+    return render(request, "index.html")

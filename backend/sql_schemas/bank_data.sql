@@ -189,7 +189,7 @@ INSERT INTO Employee VALUES (4, 'Employee_4', 2, 'Manager', 'emp4', 'e88ec8ff0c'
 INSERT INTO Employee VALUES (5, 'Employee_5', 4, 'Loan Officer', 'emp5', '7fedc470b1');
 INSERT INTO Employee VALUES (6, 'Employee_6', 4, 'Manager', 'emp6', '5bbb735e36');
 INSERT INTO Employee VALUES (7, 'Employee_7', 4, 'Loan Officer', 'emp7', '1e7b7df1a6');
-INSERT INTO Employee VALUES (8, 'Employee_8', 1, 'Loan Officer', 'emp8', '431c5610d1');
+INSERT INTO Employee VALUES (8, 'Employee_8', 3, 'Loan Officer', 'emp8', '431c5610d1');
 INSERT INTO Employee VALUES (9, 'Employee_9', 1, 'Teller', 'emp9', '7067e9bc10');
 INSERT INTO Employee VALUES (10, 'Employee_10', 6, 'Manager', 'emp10', '39e3294966');
 INSERT INTO Employee VALUES (11, 'Employee_11', 5, 'Support Staff', 'emp11', 'd75480464e');
