@@ -45,7 +45,8 @@ class CardViewSet(viewsets.ModelViewSet):
 
 class CustomerSupportViewSet(viewsets.ModelViewSet):
     queryset= CustomerSupport.objects.all()
-    serializer_class= LoanSerializer
+    serializer_class = CustomerSupportSerializer  # ✅ Correct
+
     
 class BankTransactionViewSet(viewsets.ModelViewSet):
     queryset= BankTransaction.objects.all()

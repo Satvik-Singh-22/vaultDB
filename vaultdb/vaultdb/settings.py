@@ -83,15 +83,12 @@ WSGI_APPLICATION = 'vaultdb.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-        'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'vaultdb',   # Database name
-        'USER': 'postgres', # PostgreSQL username
-        'PASSWORD': PASSWORD, # Your PostgreSQL password
-        'HOST': 'localhost',
-        'PORT': '5432',
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
 
 
 # Password validation
