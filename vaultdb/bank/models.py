@@ -14,8 +14,8 @@ class Employee ( models.Model):
     name = models.CharField(max_length= 100)
     branch_id= models.ForeignKey('Branch', on_delete= models.PROTECT)
     role = models.CharField(max_length=50)
-    username= models.CharField(max_length=50, null=False, unique=True)
-    password= models.CharField(max_length=25, null = False)
+    username= models.CharField(max_length=255, null=False, unique=True)
+    password= models.CharField(max_length=255, null = False)
 
     def __str__(self):
         return f"ID: {self.employee_id}\t Name: {self.name}"
@@ -38,6 +38,9 @@ class Customer(models.Model):
     email = models.EmailField(unique=True)
     date_of_birth = models.DateField()
     branch = models.ForeignKey('Branch', on_delete=models.CASCADE)
+    username= models.CharField(max_length=255, null=False, unique=True)
+    password= models.CharField(max_length=255, null = False)
+
 
     def __str__(self):
         return self.name

@@ -1,5 +1,10 @@
 from rest_framework import serializers
 from .models import *
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
+from django.contrib.auth import authenticate
+from rest_framework import serializers
+from django.contrib.auth.models import User
 
 class BranchSerializer(serializers.ModelSerializer):
     class Meta:
@@ -60,3 +65,30 @@ class BankTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model= BankTransaction
         fields= '__all__'
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    username_field = 'email'
+
+    def validate(self, attrs):
+        email = attrs.get("email")
+        password = attrs.get("password")
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("No user with this email")
+
+        credentials = {
+            'username': user.username,
+            'password': password
+        }
+
+        user = authenticate(**credentials)
+
+        if not user:
+            raise serializers.ValidationError("Incorrect credentials")
+
+        data = super().validate(credentials)
+        data["email"] = user.email
+        data["username"] = user.username
+        return data
