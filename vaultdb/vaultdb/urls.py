@@ -29,7 +29,6 @@ urlpatterns = [
 
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('api/dashboard/', dashboard_view)
 ]
 
 # If using static files, add this at the end of the file to serve them:

@@ -21,6 +21,7 @@ urlpatterns = [
     # API rapioutes
     path('/', include(router.urls)),
     path('register/', RegisterView.as_view(), name='auth_register'),
+    path('api/dashboard/', dashboard_view, name = 'dashboard'),
     path('whoami/', whoami),
     path('token/',  LoginView.as_view(), name='custom_token'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),

@@ -16,7 +16,9 @@ class Employee ( models.Model):
     role = models.CharField(max_length=50)
     username= models.CharField(max_length=255, null=False, unique=True)
     password= models.CharField(max_length=255, null = False)
-
+    @property
+    def id(self):
+        return self.employee_id
     def __str__(self):
         return f"ID: {self.employee_id}\t Name: {self.name}"
     
@@ -41,6 +43,9 @@ class Customer(models.Model):
     username= models.CharField(max_length=255, null=False, unique=True)
     password= models.CharField(max_length=255, null = False)
 
+    @property
+    def id(self):
+        return self.customer_id
 
     def __str__(self):
         return self.name
