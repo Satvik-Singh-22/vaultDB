@@ -176,3 +176,48 @@ def dashboard_view(request):
     }
 
     return Response(dashboard_data)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def employee_dashboard_view(request):
+    """
+    View for employee dashboard data
+    """
+    try:
+        # Get the employee based on the authenticated user
+        employee = Employee.objects.get(username=request.user.username)
+        
+        # Get the branch the employee works at
+        branch = employee.branch
+        
+        # Check if the employee is a manager
+        is_manager = BranchManager.objects.filter(manager_id=employee.employee_id).exists()
+        
+        # Count customers, loans, and customer support cases in this branch
+        customer_count = Customer.objects.filter(branch=branch).count()
+        loan_count = Loan.objects.filter(customer__branch=branch, status='ACTIVE').count()
+        complaint_count = CustomerSupport.objects.filter(branch=branch, status='OPEN').count()
+        
+        # Serialize the employee and branch data
+        employee_data = EmployeeSerializer(employee).data
+        branch_data = BranchSerializer(branch).data
+        
+        # Return all the relevant data
+        return Response({
+            'employee': employee_data,
+            'branch': branch_data,
+            'customer_count': customer_count,
+            'loan_count': loan_count,
+            'complaint_count': complaint_count,
+            'is_manager': is_manager
+        }, status=status.HTTP_200_OK)
+        
+    except Employee.DoesNotExist:
+        return Response({
+            'detail': 'Employee data not found for this user.'
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({
+            'detail': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
