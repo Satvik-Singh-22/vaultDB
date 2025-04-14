@@ -19,7 +19,7 @@ router.register(r'banktransaction', BankTransactionViewSet)
 
 urlpatterns = [
     # API rapioutes
-    path('/', include(router.urls)),
+    path('', include(router.urls)),
     path('register/', RegisterView.as_view(), name='auth_register'),
     path('api/dashboard/', dashboard_view, name = 'dashboard'),
     path('employee/dashboard/', employee_dashboard_view, name='employee_dashboard'),

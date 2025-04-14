@@ -58,22 +58,29 @@ class BankTransactionViewSet(viewsets.ModelViewSet):
     serializer_class= BankTransactionSerializer
 
 class RegisterView(APIView):
-    
     def post(self, request):
-        email= request.data.get("email")
+        email = request.data.get("email")
         password = request.data.get("password")
+
         if not email or not password:
-            return Response({"detail": "Email and password required"},status=status.HTTP_400_BAD_REQUEST)
-        if Customer.objects.filter(username=email).exists():
+            return Response({"detail": "Email and password required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if Customer.objects.filter(username=email).exists() or User.objects.filter(username=email).exists():
             return Response({"detail": "Customer with this email already exists."}, status=status.HTTP_400_BAD_REQUEST)
-        
+
+        # Create a Customer
         customer = Customer.objects.create(
             username=email,
             password=make_password(password)
-        )    
-        return Response({
-            "detail": "Customer created successfully"},
-            status= status.HTTP_201_CREATED)
+        )
+
+        # Create a corresponding Django User for JWT
+        User.objects.create_user(
+            username=email,
+            password=password
+        )
+
+        return Response({"detail": "Customer created successfully"}, status=status.HTTP_201_CREATED)
     
 class LoginView(APIView):
     def post(self, request):
@@ -106,12 +113,13 @@ class LoginView(APIView):
         refresh["role"]= role 
         for key, value in payload.items():
             refresh[key] = value
-
-        return Response({
+        r= Response({
             "refresh": str(refresh),
             "access": str(refresh.access_token),
             "role": role
         }, status=status.HTTP_200_OK)
+        print("Login view: ",r)
+        return r
     
     
 def frontend(request):
@@ -129,14 +137,18 @@ def whoami(request):
 
     is_employee = Employee.objects.filter(username=user.username).exists()
     is_manager = is_employee and BranchManager.objects.filter(manager_id_username=user.username).exists()
-    is_customer = Customer.objects.filter(email=user.username).exists()
+    is_customer = Customer.objects.filter(username=user.username).exists()
+    print(user)
+    print()
 
-    return Response({
+    r= {
         'username': user.username,
         'is_employee': is_employee,
         'is_manager': is_manager,
         'is_customer': is_customer
-    })
+    }
+    print("whoami view:",r)
+    return Response(r)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
