@@ -283,3 +283,15 @@ def customer_profile(request):
     print(serializer.data)
     return Response(serializer.data)
 
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def AccountListView(request):
+    user = request.user
+    try:
+        
+        customer = Customer.objects.get(email=user.username)
+        accounts = Account.objects.filter(customer_id=customer)
+        serializer = AccountDataSerializer(accounts, many=True)
+        return Response(serializer.data)
+    except Customer.DoesNotExist:
+        return Response({'error': 'Customer not found'}, status=404)

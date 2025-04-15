@@ -36,4 +36,5 @@ urlpatterns = [
     path('test-loan/', test_loan_flow),
     path('test-loan/', views.test_loan, name='test-loan'),
     path('customers/me/', customer_profile, name="customer_profile"),
+    path('accounts/', AccountListView, name='account-list'),
 ]

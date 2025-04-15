@@ -111,3 +111,11 @@ class CustomerProfileSerializer(serializers.ModelSerializer):
     def get_cards(self, obj):
         cards = Card.objects.filter(account__customer_id=obj)
         return CardSerializer(cards, many=True).data
+
+class AccountDataSerializer(serializers.ModelSerializer):
+    type_name = serializers.CharField(source='type_id.type_name')
+
+    class Meta:
+        model = Account
+        fields = ['accountID', 'balance', 'type_name']
+
