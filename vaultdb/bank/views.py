@@ -12,6 +12,31 @@ from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
 
+# views.py
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from .models import Account, Card
+from .serializers import CardSerializer
+from datetime import date, timedelta
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def issue_card(request):
+    user = request.user
+    try:
+        customer = Customer.objects.get(email=user.username)
+        account = Account.objects.filter(customer_id=customer).first()
+        if not account:
+            return Response({"error": "No account found for this customer."}, status=400)
+        expiry = date.today() + timedelta(days=365*5)  # 5 years validity
+        card = Card.objects.create(account=account, expiry_date=expiry, card_type='DEBIT')
+        serializer = CardSerializer(card)
+        return Response(serializer.data, status=201)
+    except Customer.DoesNotExist:
+        return Response({"error": "Customer not found."}, status=404)
+
+
 
 class BranchViewSet(viewsets.ModelViewSet):
     queryset= Branch.objects.all()

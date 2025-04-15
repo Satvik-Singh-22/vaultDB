@@ -8,6 +8,8 @@ from .views import test_loan_flow
 from bank.views import test_loan  # or wherever the test_loan view is defined
 from django.urls import path
 from . import views  # Import the views module
+from .views import issue_card
+
 
 
 router = DefaultRouter()
@@ -37,4 +39,5 @@ urlpatterns = [
     path('test-loan/', views.test_loan, name='test-loan'),
     path('customers/me/', customer_profile, name="customer_profile"),
     path('accounts/', AccountListView, name='account-list'),
+    path('cards/issue/', issue_card, name='issue_card'),
 ]

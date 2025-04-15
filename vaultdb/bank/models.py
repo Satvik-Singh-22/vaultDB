@@ -1,6 +1,30 @@
 from django.db import models
 import uuid
 # Create your models here.
+
+# models.py
+import random
+from django.db import models
+
+class Card(models.Model):
+    card_number = models.CharField(max_length=16, unique=True)
+    account = models.ForeignKey(Account, on_delete=models.CASCADE)
+    issued_date = models.DateField(auto_now_add=True)
+    expiry_date = models.DateField()
+    card_type = models.CharField(max_length=20, choices=[('DEBIT', 'Debit'), ('CREDIT', 'Credit')])
+
+    def save(self, *args, **kwargs):
+        if not self.card_number:
+            self.card_number = self.generate_unique_card_number()
+        super().save(*args, **kwargs)
+
+    def generate_unique_card_number(self):
+        while True:
+            number = ''.join([str(random.randint(0, 9)) for _ in range(16)])
+            if not Card.objects.filter(card_number=number).exists():
+                return number
+
+
 class Branch( models.Model):
     branch_id = models.AutoField(primary_key= True)
     name = models.CharField(max_length= 100)
