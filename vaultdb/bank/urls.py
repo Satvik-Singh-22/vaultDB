@@ -3,6 +3,12 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .views import *
+from django.urls import path
+from .views import test_loan_flow
+from bank.views import test_loan  # or wherever the test_loan view is defined
+from django.urls import path
+from . import views  # Import the views module
+
 
 router = DefaultRouter()
 router.register(r'employee', EmployeeViewSet)
@@ -26,4 +32,8 @@ urlpatterns = [
     path('whoami/', whoami),
     path('token/',  LoginView.as_view(), name='custom_token'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('test-loan/', test_loan_flow),
+    path('test-loan/', views.test_loan, name='test-loan'),
+
+
 ]

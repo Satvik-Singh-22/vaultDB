@@ -57,6 +57,24 @@ class BankTransactionViewSet(viewsets.ModelViewSet):
     queryset= BankTransaction.objects.all()
     serializer_class= BankTransactionSerializer
 
+from django.http import JsonResponse
+
+def test_loan(request):
+    return JsonResponse({"status": "Loan applied and approved"})
+
+
+# bank/views.py
+from django.http import JsonResponse
+from .api_queries import apply_and_approve_loan
+
+def test_loan_flow(request):
+    try:
+        apply_and_approve_loan('Mitchel Johnson', 'Employee_8')
+        return JsonResponse({'status': 'Loan applied and approved'})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
 class RegisterView(APIView):
     def post(self, request):
         email = request.data.get("email")
