@@ -79,6 +79,11 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
 }
+SIMPLE_JWT = {
+    'USER_ID_FIELD': 'id',  # Check what field is being used to identify users
+    'USER_ID_CLAIM': 'user_id',  # And what claim in the token stores the user ID
+    # Other settings...
+}
 
 
 TEMPLATES[0]['DIRS'] = [
@@ -101,6 +106,7 @@ DATABASES = {
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8080",
+    "http://localhost:5173",
 ]
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True

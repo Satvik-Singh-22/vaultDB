@@ -8,6 +8,9 @@ from rest_framework import status
 from .models import *
 from .serializers import *
 from .api_queries import *
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import api_view, permission_classes
+
 
 class BranchViewSet(viewsets.ModelViewSet):
     queryset= Branch.objects.all()
@@ -99,7 +102,6 @@ class RegisterView(APIView):
         )
 
         return Response({"detail": "Customer created successfully"}, status=status.HTTP_201_CREATED)
-    
 class LoginView(APIView):
     def post(self, request):
         username = request.data.get("email")
@@ -107,38 +109,45 @@ class LoginView(APIView):
         print("Login attempt:")
         print("Email:", username)
         print("Password:", password)
+        
+        # First try to find the Django User model instance
         try:
-            user = Customer.objects.get(username=username)
-            role = "customer"
-            user_id= user.customer_id
-        except Customer.DoesNotExist:
+            # This assumes you have a User model with matching username
+            auth_user = User.objects.get(username=username)
+            
+            # Now determine if they're a customer or employee
             try:
-                user = Employee.objects.get(username=username)
-                role = "employee"
-                user_id= user.employee_id
-            except Employee.DoesNotExist:
+                user = Customer.objects.get(username=username)
+                role = "customer"
+                user_id = user.customer_id
+            except Customer.DoesNotExist:
+                try:
+                    user = Employee.objects.get(username=username)
+                    role = "employee"
+                    user_id = user.employee_id
+                except Employee.DoesNotExist:
+                    return Response({"detail": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+                
+            # Check password (you might want to use Django's auth system here)
+            if not check_password(password, user.password):
                 return Response({"detail": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
-        if not check_password(password, user.password):
-            return Response({"detail": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
-
-        payload = {
-            "id": user_id,
-            "username": user.username,
-            "role": role,
-        }
-
-        refresh = RefreshToken.for_user(user)
-        refresh["role"]= role 
-        for key, value in payload.items():
-            refresh[key] = value
-        r= Response({
-            "refresh": str(refresh),
-            "access": str(refresh.access_token),
-            "role": role
-        }, status=status.HTTP_200_OK)
-        print("Login view: ",r)
-        return r
-    
+            
+            # Generate token for the Django User
+            refresh = RefreshToken.for_user(auth_user)
+            
+            # Add custom claims
+            refresh["role"] = role
+            refresh["id"] = user_id
+            refresh["username"] = username
+            
+            return Response({
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
+                "role": role
+            }, status=status.HTTP_200_OK)
+            
+        except User.DoesNotExist:
+            return Response({"detail": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)    
     
 def frontend(request):
     return render(request, "index.html")
@@ -151,21 +160,29 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def whoami(request):
-    user= request.user
-
+    user = request.user
+    
+    # Add debugging
+    print("User in request:", user.username)
+    print("User ID:", user.id)
+    print("Request auth:", request.auth)  # This shows the token being used
+    
+    # Check if this username exists in Employee model
+    employee_exists = Employee.objects.filter(username=user.username).exists()
+    print("Username exists in Employee model:", employee_exists)
+    
+    # Original code continues...
     is_employee = Employee.objects.filter(username=user.username).exists()
-    is_manager = is_employee and BranchManager.objects.filter(manager_id_username=user.username).exists()
+    is_manager = is_employee and BranchManager.objects.filter(manager_id__username=user.username).exists()
     is_customer = Customer.objects.filter(username=user.username).exists()
-    print(user)
-    print()
-
-    r= {
+    
+    r = {
         'username': user.username,
         'is_employee': is_employee,
         'is_manager': is_manager,
         'is_customer': is_customer
     }
-    print("whoami view:",r)
+    print("whoami view:", r)
     return Response(r)
 
 @api_view(['GET'])
@@ -193,18 +210,19 @@ def dashboard_view(request):
         return Response({"error": "Customer not found."}, status=404)
 
     # Fetch data
-    accounts = Account.objects.filter(customer=customer)
-    transactions = BankTransaction.objects.filter(account__in=accounts).order_by('-timestamp')
-    loans = Loan.objects.filter(customer=customer)
+    accounts = Account.objects.filter(customer_id=customer)
+    transactions = BankTransaction.objects.filter(account_id__in=accounts).order_by('-timestamp')[:5]
+    loans = Loan.objects.filter(customer_id=customer)
     cards = Card.objects.filter(account__in=accounts)
 
     dashboard_data = {
+        "username": customer.name,
         "accounts": AccountSerializer(accounts, many=True).data,
         "transactions": BankTransactionSerializer(transactions, many=True).data,
         "loans": LoanSerializer(loans, many=True).data,
         "cards": CardSerializer(cards, many=True).data,
     }
-
+    print(dashboard_data)
     return Response(dashboard_data)
 
 

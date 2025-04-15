@@ -29,15 +29,10 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', frontend),  # Root path renders React
-    path('api/', include('bank.urls')),  # API paths from bank/urls.py
-    path('test-loan/', test_loan, name='test-loan'),
-
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('admin/', admin.site.urls),
-    path('bank/', include('bank.urls')),
+    path('api/', include('bank.urls')),  # All API routes under /api/
 ]
 
 # If using static files, add this at the end of the file to serve them:
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

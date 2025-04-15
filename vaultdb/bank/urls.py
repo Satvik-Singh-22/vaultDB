@@ -22,18 +22,17 @@ router.register(r'loan', LoanViewSet)
 router.register(r'repayment', RepaymentViewSet)
 router.register(r'customersupport', CustomerSupportViewSet)
 router.register(r'banktransaction', BankTransactionViewSet)
+print(f"Registering employee dashboard URL: employee/dashboard/ -> {employee_dashboard_view.__name__}")
 
 urlpatterns = [
-    # API rapioutes
+    # API routes
     path('', include(router.urls)),
     path('register/', RegisterView.as_view(), name='auth_register'),
-    path('api/dashboard/', dashboard_view, name = 'dashboard'),
-    path('employee/dashboard/', employee_dashboard_view, name='employee_dashboard'),
+    path('dashboard/', dashboard_view, name='dashboard'),
+    path('employee/dashboard/', employee_dashboard_view, name='employee-dashboard'),
     path('whoami/', whoami),
-    path('token/',  LoginView.as_view(), name='custom_token'),
+    path('token/', LoginView.as_view(), name='custom_token'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('test-loan/', test_loan_flow),
     path('test-loan/', views.test_loan, name='test-loan'),
-
-
 ]
