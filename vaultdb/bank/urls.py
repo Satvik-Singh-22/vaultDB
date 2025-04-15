@@ -29,10 +29,11 @@ urlpatterns = [
     path('', include(router.urls)),
     path('register/', RegisterView.as_view(), name='auth_register'),
     path('dashboard/', dashboard_view, name='dashboard'),
-    path('employee/dashboard/', employee_dashboard_view, name='employee-dashboard'),
+    path('employee/dashboard/', employee_dashboard_view, name='employee_dashboard'),
     path('whoami/', whoami),
     path('token/', LoginView.as_view(), name='custom_token'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('test-loan/', test_loan_flow),
     path('test-loan/', views.test_loan, name='test-loan'),
+    path('customers/me/', customer_profile, name="customer_profile"),
 ]

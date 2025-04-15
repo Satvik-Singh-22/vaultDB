@@ -8,6 +8,7 @@ from rest_framework import status
 from .models import *
 from .serializers import *
 from .api_queries import *
+from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
 
@@ -79,6 +80,7 @@ def test_loan_flow(request):
 
 
 class RegisterView(APIView):
+    permission_classes = [AllowAny]
     def post(self, request):
         email = request.data.get("email")
         password = request.data.get("password")
@@ -103,6 +105,7 @@ class RegisterView(APIView):
 
         return Response({"detail": "Customer created successfully"}, status=status.HTTP_201_CREATED)
 class LoginView(APIView):
+    permission_classes = [AllowAny]  
     def post(self, request):
         username = request.data.get("email")
         password = request.data.get("password")
@@ -155,8 +158,6 @@ def frontend(request):
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import CustomTokenObtainPairSerializer
 
-class CustomTokenObtainPairView(TokenObtainPairView):
-    serializer_class = CustomTokenObtainPairSerializer
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def whoami(request):
@@ -269,3 +270,16 @@ def employee_dashboard_view(request):
         return Response({
             'detail': str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def customer_profile(request):
+    user= request.user
+    try:
+        customer = Customer.objects.get(email=user.username)
+    except Customer.DoesNotExist:
+        return Response({"error": "Customer not found."}, status=404)
+    serializer = CustomerProfileSerializer(customer)
+    print(serializer.data)
+    return Response(serializer.data)
+

@@ -92,3 +92,22 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data["email"] = user.email
         data["username"] = user.username
         return data
+    
+
+class CustomerProfileSerializer(serializers.ModelSerializer):
+    accounts = serializers.SerializerMethodField()
+    cards = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Customer
+        fields = [
+            'customer_id', 'name', 'email', 'phone_number', 'address',
+            'date_of_birth', 'accounts', 'cards'
+        ]
+
+    def get_accounts(self, obj):
+        accounts = Account.objects.filter(customer_id=obj)
+        return AccountSerializer(accounts, many=True).data
+    def get_cards(self, obj):
+        cards = Card.objects.filter(account__customer_id=obj)
+        return CardSerializer(cards, many=True).data
