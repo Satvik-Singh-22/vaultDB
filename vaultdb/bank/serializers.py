@@ -52,9 +52,12 @@ class RepaymentSerializer(serializers.ModelSerializer):
         fields= '__all__'
 
 class CardSerializer(serializers.ModelSerializer):
+    card_number = serializers.UUIDField(read_only=True)
+
     class Meta:
-        model= Card
-        fields= '__all__'
+        model = Card
+        fields = ['card_id', 'card_number', 'expiry_date', 'card_type', 'account']
+
 
 class CustomerSupportSerializer(serializers.ModelSerializer):
     class Meta:
@@ -112,10 +115,80 @@ class CustomerProfileSerializer(serializers.ModelSerializer):
         cards = Card.objects.filter(account__customer_id=obj)
         return CardSerializer(cards, many=True).data
 
+
 class AccountDataSerializer(serializers.ModelSerializer):
     type_name = serializers.CharField(source='type_id.type_name')
+    customer_id = serializers.SerializerMethodField()
+    branch_id = serializers.SerializerMethodField()
+    interest_rate = serializers.DecimalField(source='type_id.interest_rate', max_digits=5, decimal_places=2)
 
     class Meta:
         model = Account
-        fields = ['accountID', 'balance', 'type_name']
+        fields = ['accountID', 'balance', 'type_name', 'customer_id', 'branch_id', 'interest_rate']
 
+    def get_customer_id(self, obj):
+        return {'customer_id': obj.customer_id.customer_id} if obj.customer_id else None
+
+    def get_branch_id(self, obj):
+        return {'branch_id': obj.branch_id.branch_id} if obj.branch_id else None
+
+class TransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BankTransaction
+        fields = [
+            'transaction_id',
+            'account_id',
+            'amount',
+            'transactionType',
+            'timestamp',
+            'status',
+            'receiver_account_id',
+            'employee_id'  # if applicable
+        ]
+
+class AccountCreateSerializer(serializers.ModelSerializer):
+    initial_deposit = serializers.DecimalField(max_digits=17, decimal_places=2, write_only=True)
+    
+    class Meta:
+        model = Account
+        fields = ['type_id', 'branch_id', 'initial_deposit']
+        
+    def create(self, validated_data):
+        request = self.context['request']
+        
+        # Get the customer related to this user by username
+        try:
+            customer = Customer.objects.get(username=request.user.username)
+        except Customer.DoesNotExist:
+            raise serializers.ValidationError("No customer account found for this user")
+            
+        initial_deposit = validated_data.pop('initial_deposit')
+        
+        account = Account.objects.create(
+            customer_id=customer,
+            balance=initial_deposit,
+            **validated_data
+        )
+        
+        # Optionally create a transaction record for the initial deposit
+        BankTransaction.objects.create(
+            account_id=account,
+            transaction_type='DEPOSIT',
+            amount=initial_deposit,
+            status='COMPLETED'
+        )
+        
+        return account
+    
+class ChangePinSerializer(serializers.Serializer):
+    new_pin = serializers.CharField(min_length=4, max_length=4)
+
+class CardLimitSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Card
+        fields = ['limit_daily', 'limit_monthly', 'international_usage']
+
+class CardTransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BankTransaction
+        fields = ['transaction_id', 'transactionType', 'amount', 'timestamp', 'status']

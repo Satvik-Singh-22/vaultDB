@@ -1,4 +1,5 @@
-from django.shortcuts import render
+from datetime import date, timedelta, timezone
+from django.shortcuts import get_object_or_404, render
 from rest_framework import viewsets
 from django.contrib.auth.hashers import make_password, check_password
 from rest_framework.response import Response
@@ -11,6 +12,7 @@ from .api_queries import *
 from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework import generics, mixins
 
 
 class BranchViewSet(viewsets.ModelViewSet):
@@ -235,7 +237,8 @@ def employee_dashboard_view(request):
     """
     try:
         # Get the employee based on the authenticated user
-        employee = Employee.objects.get(username=request.user.username)
+        employee = Employee.objects.get(user=request.user)
+
         
         # Get the branch the employee works at
         branch = employee.branch
@@ -295,3 +298,238 @@ def AccountListView(request):
         return Response(serializer.data)
     except Customer.DoesNotExist:
         return Response({'error': 'Customer not found'}, status=404)
+    
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_account_detail(request, account_id):
+    try:
+        account = Account.objects.get(accountID=account_id)
+    except Account.DoesNotExist:
+        return Response({'error': 'Account not found'}, status=404)
+
+    # Restrict customer access to their own account
+    if hasattr(request.user, 'customer'):
+        if account.customer != request.user.customer:
+            return Response({'error': 'Unauthorized'}, status=403)
+
+    # If the user is an employee or admin, let it pass
+    serializer = AccountDataSerializer(account)
+    print(serializer.data)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_account_transactions(request, account_id):
+    try:
+        account = Account.objects.get(accountID=account_id, customer=request.user.customer)
+    except Account.DoesNotExist:
+        return Response({'error': 'Account not found'}, status=404)
+
+    transactions = BankTransaction.objects.filter(
+        Q(account_id=account) | Q(receiver_account_id=account)
+    ).order_by('-timestamp')
+
+    serializer = TransactionSerializer(transactions, many=True)
+    return Response(serializer.data)
+
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_customer_detail(request, customer_id):
+    try:
+        customer = Customer.objects.get(customer_id=customer_id)
+        serializer = CustomerSerializer(customer)
+        return Response(serializer.data)
+    except Customer.DoesNotExist:
+        return Response({'error': 'Customer not found'}, status=404)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_branch_detail(request, branch_id):
+    try:
+        branch = Branch.objects.get(branch_id=branch_id)
+        serializer = BranchSerializer(branch)
+        return Response(serializer.data)
+    except Branch.DoesNotExist:
+        return Response({'error': 'Branch not found'}, status=404)
+    
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_user_transactions(request):
+    try:
+        user = request.user
+        
+        # For customers: filter only their transactions
+        if hasattr(user, 'customer'):
+            customer_accounts = Account.objects.filter(customer_id=user.customer)
+            transactions = BankTransaction.objects.filter(account_id__in=customer_accounts)
+        else:
+            # Employees/Admins see all transactions (or you can restrict as needed)
+            transactions = BankTransaction.objects.all()
+    except Exception as e:
+        return Response({"error": f"Transaction unable to be fetched: {str(e)}"}, status=404)
+    serializer = TransactionSerializer(transactions.order_by('-timestamp'), many=True)
+    print(serializer.data)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_account_types(request):
+    types = AccountType.objects.all()
+    serializer = AccountTypeSerializer(types, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_branches(request):
+    branches = Branch.objects.all()
+    serializer = BranchSerializer(branches, many=True)
+    return Response(serializer.data)
+
+
+class AccountViewAPI(generics.GenericAPIView, 
+                     mixins.ListModelMixin,
+                     mixins.CreateModelMixin):
+    permission_classes = [IsAuthenticated]
+    
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return AccountCreateSerializer
+        return AccountDataSerializer
+    
+    def get_queryset(self):
+        user = self.request.user
+        try:
+            customer = Customer.objects.get(email=user.username)
+            return Account.objects.filter(customer_id=customer)
+        except Customer.DoesNotExist:
+            return Account.objects.none()
+    
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+    
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
+
+# views.py
+from decimal import Decimal
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def transfer_funds(request):
+    account_id = request.data.get('account_id')
+    receiver_account_id = request.data.get('receiver_account_id')
+    amount = request.data.get('amount')
+    description = request.data.get('description')
+    
+    try:
+        amount = Decimal(amount)  # ✅ Safe and precise
+    except:
+        return Response({'detail': 'Invalid amount'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Validate inputs
+    if not all([account_id, receiver_account_id, amount]):
+        return Response({'detail': 'Missing required fields'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        # Get accounts
+        from_account = Account.objects.get(accountID=account_id)
+        to_account = Account.objects.get(accountID=receiver_account_id)
+        
+        # Verify account ownership - using customer_id relationship
+        if from_account.customer_id.username != request.user.username:
+            return Response({'detail': 'Not authorized to transfer from this account'},
+                          status=status.HTTP_403_FORBIDDEN)
+        
+        # Check sufficient funds
+        if from_account.balance < (amount):
+            return Response({'detail': 'Insufficient funds'},
+                          status=status.HTTP_400_BAD_REQUEST)
+            
+        # Create transaction in a transaction
+        from django.db import transaction
+        with transaction.atomic():
+            # Deduct from source account
+            from_account.balance -= (amount)
+            from_account.save()
+            
+            # Add to target account
+            to_account.balance += (amount)
+            to_account.save()
+            
+            # Create transaction record
+            transaction_record = BankTransaction.objects.create(
+                account_id=from_account,
+                receiver_account_id=to_account,
+                amount=amount,
+                transactionType='Transfer',
+                status='COMPLETED'
+            )
+        
+        return Response({
+            'detail': 'Transfer successful',
+            'transaction_id': transaction_record.transaction_id
+        }, status=status.HTTP_200_OK)
+        
+    except Account.DoesNotExist:
+        return Response({'detail': 'Account not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+class CardListAPIView(generics.ListAPIView):
+    serializer_class = CardSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        customer = self.request.user.customer
+        return Card.objects.filter(account__customer_id=customer)
+
+# Request a new card
+class RequestNewCardAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        customer = request.user.customer
+        account_id = request.data.get("account_id")
+        card_type = request.data.get("card_type")
+
+        if not account_id or not card_type:
+            return Response({"error": "account_id and card_type are required."}, status=400)
+
+        account = get_object_or_404(Account, pk=account_id, customer_id=customer)
+
+        new_card = Card.objects.create(
+            card_number=uuid.uuid4(),
+            expiry_date=date.today() + timedelta(days=365 * 4),
+            card_type=card_type,
+            account=account
+        )
+
+        serializer = CardSerializer(new_card)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+# Block a card (for now, just deletes it)
+class BlockCardAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, card_id):
+        customer = request.user.customer
+        card = get_object_or_404(Card, pk=card_id, account__customer_id=customer)
+
+        card.delete()  # Optional: replace with `card.is_blocked = True` if you add such a field
+        return Response({"message": "Card blocked successfully."}, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def card_statement_view(request, card_id):
+    one_month_ago = timezone.now() - timedelta(days=30)
+    transactions = BankTransaction.objects.filter(
+        card_id=card_id,
+        timestamp__gte=one_month_ago
+    ).order_by('-timestamp')
+    
+    serializer = BankTransactionSerializer(transactions, many=True)
+    return Response(serializer.data)
